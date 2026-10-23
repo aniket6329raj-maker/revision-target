@@ -1,192 +1,240 @@
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Revision Target</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Revision Target — PDF Test</title>
 <style>
-body{font-family:Arial,sans-serif;background:#f3f5fa;margin:0;color:#172033}
-header{background:#173ea5;color:white;padding:18px;text-align:center}
-main{max-width:700px;margin:auto;padding:14px}
-.card{background:white;padding:16px;margin:12px 0;border-radius:14px;box-shadow:0 2px 8px #ddd}
-button{padding:12px;border:0;border-radius:9px;background:#175cd3;color:white;font-size:15px;margin:4px;cursor:pointer}
-.menu button{width:47%;min-height:65px}
-.option{display:block;width:100%;text-align:left;background:white;color:#172033;border:1px solid #aaa}
-.option.selected{background:#dbeafe;border:2px solid #175cd3}
-.hidden{display:none}
-.muted{color:#667085;font-size:14px}
+*{box-sizing:border-box}
+body{margin:0;padding:14px;background:#f3f5fa;color:#172033;font-family:system-ui,sans-serif}
+.wrap{max-width:760px;margin:auto}
+header,.panel,.question,.result{background:white;border-radius:15px;padding:16px;margin-bottom:13px;box-shadow:0 3px 12px #1720330b}
+h1{font-size:1.4rem;margin:0 0 7px}
+h2{font-size:1.1rem;margin-top:0}
+.muted{color:#596579;line-height:1.5}
+input[type=file]{width:100%;padding:10px;border:1px solid #ccd3df;border-radius:9px;margin:8px 0 12px}
+button{background:#2457d6;color:white;border:0;border-radius:10px;padding:12px 15px;font-size:1rem;font-weight:650}
+button:disabled{opacity:.4}
+.secondary{background:#e9eefb;color:#1e3a8a}
+.status{background:#eef3ff;border-radius:9px;padding:10px;white-space:pre-wrap;margin-top:10px}
+.hidden{display:none!important}
+.meta{display:flex;justify-content:space-between;gap:10px;color:#596579;font-size:.9rem}
+.qtext{white-space:pre-wrap;line-height:1.65;font-weight:650;margin:14px 0}
+.option{display:flex;gap:10px;border:1px solid #d9deea;border-radius:11px;padding:12px;margin:8px 0;line-height:1.5}
+.option:has(input:checked){border-color:#2457d6;background:#eef3ff}
+.option input{margin-top:5px}
+.actions{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:15px}
+.score{font-size:1.7rem;font-weight:800}
+.small{font-size:.85rem}
 </style>
 </head>
 <body>
-<header><h2>Revision Target</h2>UPSC CSE 2027</header>
-<main>
-<section id="home" class="card">
-<h3>आपका टेस्ट डैशबोर्ड</h3>
-<p class="muted">प्रश्न कोड में जोड़ें। टेस्ट के बाद स्कोर मिलेगा। कोई स्कोर या इतिहास सेव नहीं होगा।</p>
-<div class="menu">
-<button onclick="openSection('new')">New Test</button>
-<button onclick="openSection('old')">Old Topic</button>
-<button onclick="openSection('serial')">Serial Tests</button>
-<button onclick="openSection('daily')">Daily Task</button>
-<button onclick="openSection('sunday')">Sunday Test</button>
+<div class="wrap">
+<header>
+<h1>Revision Target</h1>
+<div class="muted">PDF चुनें — प्रश्न और अंत की Answer Key से टेस्ट बनाने की कोशिश होगी।</div>
+</header>
+
+<section class="panel" id="uploadPanel">
+<h2>PDF से टेस्ट शुरू करें</h2>
+<input id="pdfFile" type="file" accept=".pdf,application/pdf">
+<button id="readBtn">PDF पढ़ें</button>
+<div id="status" class="status">पहले PDF चुनें।</div>
+<p class="muted small">यह पेज टेक्स्ट वाली PDF के लिए है। स्कैन/फोटो वाली PDF में OCR की जरूरत हो सकती है।</p>
+</section>
+
+<section id="testPanel" class="hidden">
+<div class="question">
+<div class="meta"><span id="progress"></span><span id="timer"></span></div>
+<div id="qtext" class="qtext"></div>
+<div id="options"></div>
+<div class="actions">
+<button id="prevBtn" class="secondary">पिछला</button>
+<button id="nextBtn">अगला</button>
+<button id="submitBtn" class="hidden">टेस्ट जमा करें</button>
+</div>
 </div>
 </section>
+<section id="resultPanel" class="result hidden"></section>
+</div>
 
-<section id="list" class="card hidden">
-<button onclick="home()">मुख्य पेज</button>
-<h3 id="heading"></h3><p id="hint" class="muted"></p>
-<div id="tests"></div>
-</section>
-
-<section id="quiz" class="card hidden">
-<p id="label"></p><p id="timer">20 सेकंड</p>
-<p id="number"></p><h3 id="question"></h3>
-<div id="options"></div>
-<button onclick="move(-1)">पिछला</button>
-<button onclick="move(1)">अगला</button>
-<button onclick="submit()">सबमिट टेस्ट</button>
-</section>
-
-<section id="result" class="card hidden">
-<h2>टेस्ट परिणाम</h2><h2 id="score"></h2>
-<div id="summary"></div>
-<button onclick="home()">मुख्य पेज</button>
-<button onclick="openSection('serial')">नया टेस्ट</button>
-<h3>उत्तर की जाँच</h3><div id="review"></div>
-</section>
-</main>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-// ========== QUESTION_BANK: अपने प्रश्न यहाँ जोड़ें ==========
-// answer: 0=A, 1=B, 2=C, 3=D
-// date का प्रारूप YYYY-MM-DD रखें।
-const QUESTION_BANK = [
-{
- date:"2026-10-23",
- topic:"Polity",
- question:"भारतीय संविधान कब लागू हुआ?",
- options:["15 अगस्त 1947","26 जनवरी 1950","26 नवंबर 1949","2 अक्टूबर 1950"],
- answer:1,
- explanation:"भारतीय संविधान 26 जनवरी 1950 को लागू हुआ।"
-},
-{
- date:"2026-10-22",
- topic:"Polity",
- question:"संविधान सभा के स्थायी अध्यक्ष कौन थे?",
- options:["डॉ. आंबेडकर","जवाहरलाल नेहरू","डॉ. राजेंद्र प्रसाद","सरदार पटेल"],
- answer:2,
- explanation:"डॉ. राजेंद्र प्रसाद संविधान सभा के स्थायी अध्यक्ष थे।"
-},
-{
- date:"2026-10-20",
- topic:"Polity",
- question:"प्रस्तावना में भारत को किस रूप में वर्णित किया गया है?",
- options:["राजतंत्र","संप्रभु समाजवादी पंथनिरपेक्ष लोकतंत्रात्मक गणराज्य","सैन्य राज्य","उपनिवेश"],
- answer:1,
- explanation:"ये शब्द भारतीय संविधान की प्रस्तावना में हैं।"
-}
-];
-// ========== प्रश्न जोड़ने के बाद नीचे का कोड न बदलें ==========
+if(window.pdfjsLib)
+ pdfjsLib.GlobalWorkerOptions.workerSrc=
+ "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-let qs=[],ans=[],pos=0,seconds=20,clock=null,testName="";
 const $=id=>document.getElementById(id);
-function hide(){["home","list","quiz","result"].forEach(x=>$(x).classList.add("hidden"))}
-function home(){clearInterval(clock);hide();$("home").classList.remove("hidden")}
-function age(date){
- let a=new Date();a.setHours(0,0,0,0);
- return Math.floor((a-new Date(date+"T00:00:00"))/86400000);
+let questions=[],answerKey={},selected={},index=0,timer=null,secs=20,done=false;
+
+function say(t){$("status").textContent=t}
+function norm(s){
+ return s.replace(/\u00a0/g," ").replace(/\r/g,"\n")
+ .replace(/[ \t]+/g," ").replace(/\n{3,}/g,"\n\n").trim();
 }
-function openSection(type){
- clearInterval(clock);hide();$("list").classList.remove("hidden");
- $("tests").innerHTML="";
- let data=[],title="",hint="";
- if(type==="new"){
- title="New Test";hint="आज और कल के प्रश्न";
- data=QUESTION_BANK.filter(q=>age(q.date)>=0&&age(q.date)<=1);
+
+async function pdfText(file){
+ const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+ let out="";
+ for(let p=1;p<=pdf.numPages;p++){
+  const page=await pdf.getPage(p),c=await page.getTextContent();
+  let line="",y0=null;
+  for(const it of c.items){
+   if(!it.str)continue;
+   let y=it.transform?it.transform[5]:null;
+   if(y0!==null&&y!==null&&Math.abs(y-y0)>3)line+="\n";
+   else if(line&&!line.endsWith("\n"))line+=" ";
+   line+=it.str;y0=y;
+  }
+  out+="\n"+line+"\n";
  }
- if(type==="old"){
- title="Old Topic";hint="2 दिन से अधिक पुराने प्रश्न";
- data=QUESTION_BANK.filter(q=>age(q.date)>=2);
- }
- if(type==="serial"){
- title="Serial Tests";hint="प्रश्नों को क्रम से 10-10 के टेस्ट में बाँटा गया है";
- data=QUESTION_BANK.slice();
- }
- if(type==="daily"){
- title="Daily Task";hint="100 + 100 प्रश्न";
- data=QUESTION_BANK.filter(q=>age(q.date)>=0&&age(q.date)<=1);
- }
- if(type==="sunday"){
- title="Sunday Test";hint="पिछले 30 दिनों के प्रश्न; लक्ष्य 200";
- data=QUESTION_BANK.filter(q=>age(q.date)>=0&&age(q.date)<30);
- }
- $("heading").textContent=title;$("hint").textContent=hint;
- if(!data.length){$("tests").textContent="इस सेक्शन में प्रश्न नहीं हैं। QUESTION_BANK में प्रश्न और सही तारीख जोड़ें।";return}
- if(type==="serial"){
- for(let i=0;i<data.length;i+=10){
-  const part=data.slice(i,i+10);
-  addButton("Test "+(Math.floor(i/10)+1)+" ("+part.length+" प्रश्न)",()=>start(part,"Test "+(Math.floor(i/10)+1),false));
- }
- }else if(type==="daily"){
- for(let i=0;i<2;i++){
-  const part=data.slice(i*100,(i+1)*100);
-  addButton("Daily Task "+(i+1)+" ("+part.length+" प्रश्न)",()=>start(part,"Daily Task "+(i+1),false));
- }
- }else{
- const size=type==="sunday"?200:10;
- const part=data.slice(0,size);
- addButton(title+" ("+part.length+" प्रश्न)",()=>start(part,title,type==="sunday"));
- }
+ return norm(out);
 }
-function addButton(text,fn){
- const b=document.createElement("button");b.textContent=text;b.style.display="block";b.style.width="100%";b.onclick=fn;$("tests").appendChild(b);
+
+function parseKey(text){
+ const k={};
+ for(const line of text.split("\n")){
+  let m=line.trim().match(/^(\d{1,3})\s*[\.\)\-:]\s*[\(\[]?([A-D])[\)\]]?\s*$/i);
+  if(m)k[+m[1]]=m[2].toUpperCase();
+ }
+ const re=/(?:^|\s)(\d{1,3})\s*[\.\)]\s*([A-D])(?=\s|$)/g;
+ let m;
+ while((m=re.exec(text))!==null){
+  let n=+m[1];
+  if(n>0&&n<1000)k[n]=m[2].toUpperCase();
+ }
+ return k;
 }
-function start(data,name,sunday){
- if(!data.length){alert("प्रश्न उपलब्ध नहीं हैं");return}
- qs=data;ans=Array(qs.length).fill(null);pos=0;testName=name;
- window.sundayMode=sunday;hide();$("quiz").classList.remove("hidden");
- $("label").textContent=name;draw();resetClock();
+
+function parseQs(text){
+ const starts=[...text.matchAll(/प्रश्न\s*(\d{1,3})\s*[\.\:।]\s*/g)];
+ const out=[];
+ for(let i=0;i<starts.length;i++){
+  let a=starts[i].index;
+  let b=i+1<starts.length?starts[i+1].index:text.length;
+  let block=text.slice(a,b).trim();
+  block=block.replace(/\n\s*(?:उत्तर\s*कुंजी|answer\s*key|उत्तरमाला)\b[\s\S]*$/i,"").trim();
+
+  const optRe=/(?:^|\n|\s)\(\s*([A-D])\s*\)\s*/g;
+  const ms=[...block.matchAll(optRe)],opts={};
+  for(let j=0;j<ms.length;j++){
+   const label=ms[j][1].toUpperCase();
+   const st=ms[j].index+ms[j][0].length;
+   const en=j+1<ms.length?ms[j+1].index:block.length;
+   opts[label]=block.slice(st,en).trim().replace(/\s*\n\s*/g," ");
+  }
+  let qtext=ms.length?block.slice(0,ms[0].index):block;
+  qtext=qtext.replace(/^प्रश्न\s*\d{1,3}\s*[\.\:।]\s*/,"").trim();
+  if(qtext&&["A","B","C","D"].every(x=>opts[x]))
+   out.push({n:+starts[i][1],text:qtext,opts});
+ }
+ return out;
 }
-function draw(){
- const q=qs[pos];$("number").textContent="प्रश्न "+(pos+1)+" / "+qs.length+" • उत्तर दिए: "+ans.filter(x=>x!==null).length;
- $("question").textContent=q.question;$("options").innerHTML="";
- q.options.forEach((o,i)=>{
-  const b=document.createElement("button");b.className="option"+(ans[pos]===i?" selected":"");
-  b.textContent=String.fromCharCode(65+i)+". "+o;
-  b.onclick=()=>{ans[pos]=i;draw()};$("options").appendChild(b);
- });
-}
-function move(n){pos=Math.max(0,Math.min(qs.length-1,pos+n));draw();resetClock()}
-function resetClock(){
- clearInterval(clock);seconds=20;showTime();
- clock=setInterval(()=>{
-  seconds--;showTime();
-  if(seconds<=0){
-   if(pos<qs.length-1){pos++;draw();resetClock()}
-   else submit(true);
+
+$("readBtn").onclick=async()=>{
+ const file=$("pdfFile").files[0];
+ if(!file){say("पहले PDF फ़ाइल चुनें।");return}
+ if(!window.pdfjsLib){say("PDF लाइब्रेरी लोड नहीं हुई। इंटरनेट चालू करके पेज फिर खोलें।");return}
+
+ $("readBtn").disabled=true;
+ say("PDF पढ़ी जा रही है… कृपया प्रतीक्षा करें।");
+ try{
+  const text=await pdfText(file);
+  let keyStart=text.search(/(?:उत्तर\s*कुंजी|answer\s*key|उत्तरमाला)/i);
+  let key=parseKey(keyStart>=0?text.slice(keyStart):text);
+  questions=parseQs(text).filter(q=>key[q.n]);
+  answerKey=key;
+
+  if(!questions.length){
+   say("प्रश्न या Answer Key पहचान नहीं पाए। जाँचें कि PDF में टेक्स्ट चुना जा सकता है और Answer Key जैसे 1. A के रूप में है। स्कैन PDF के लिए OCR चाहिए।");
+   return;
+  }
+  selected={};index=0;done=false;
+  $("resultPanel").classList.add("hidden");
+  $("testPanel").classList.remove("hidden");
+  say("तैयार! "+questions.length+" प्रश्न Answer Key से मिलाए गए।");
+  render();
+  $("testPanel").scrollIntoView({behavior:"smooth"});
+ }catch(e){
+  say("PDF पढ़ने में समस्या हुई। टेक्स्ट वाली PDF आज़माएँ।");
+ }finally{
+  $("readBtn").disabled=false;
+ }
+};
+
+function stop(){if(timer)clearInterval(timer);timer=null}
+function startTimer(){
+ stop();secs=20;
+ $("timer").textContent="समय: "+secs+" सेकंड";
+ timer=setInterval(()=>{
+  secs--;
+  $("timer").textContent="समय: "+secs+" सेकंड";
+  if(secs<=0){
+   stop();
+   if(index<questions.length-1){index++;render()}
+   else submit();
   }
  },1000);
 }
-function showTime(){$("timer").textContent="समय: "+seconds+" सेकंड"}
-function submit(auto=false){
- clearInterval(clock);let correct=0,wrong=0,blank=0;
- qs.forEach((q,i)=>{if(ans[i]===null)blank++;else if(ans[i]===q.answer)correct++;else wrong++});
- const per=window.sundayMode?2.5:2;
- const minus=window.sundayMode?5/6:2/3;
- const score=correct*per-wrong*minus;
- hide();$("result").classList.remove("hidden");
- $("score").textContent=score.toFixed(2)+" अंक";
- $("summary").innerHTML="कुल प्रश्न: "+qs.length+"<br>सही उत्तर: "+correct+"<br>गलत उत्तर: "+wrong+"<br>छोड़े गए: "+blank+"<br>प्रतिशत: "+(qs.length?(Math.max(0,score)/(qs.length*per)*100).toFixed(2):0)+"%"+(auto?"<br>समय समाप्त हुआ; टेस्ट अपने-आप सबमिट हुआ.":"");
- $("review").innerHTML="";
- qs.forEach((q,i)=>{
-  const d=document.createElement("div");d.className="card";
-  const ua=ans[i]===null?"छोड़ा गया":String.fromCharCode(65+ans[i])+". "+q.options[ans[i]];
-  d.innerHTML="<b>प्रश्न "+(i+1)+": "+q.question+"</b><p>आपका उत्तर: "+ua+"</p><p>सही उत्तर: "+String.fromCharCode(65+q.answer)+". "+q.options[q.answer]+"</p><p class='muted'>"+(q.explanation||"")+"</p>";
-  $("review").appendChild(d);
- });
+
+function render(){
+ if(done||!questions.length)return;
+ let q=questions[index];
+ $("progress").textContent=`प्रश्न ${index+1} / ${questions.length}`;
+ $("qtext").textContent=`प्रश्न ${q.n}. ${q.text}`;
+ $("options").innerHTML="";
+ for(const k of ["A","B","C","D"]){
+  let lab=document.createElement("label");lab.className="option";
+  let inp=document.createElement("input");
+  inp.type="radio";inp.name="answer";inp.value=k;
+  inp.checked=selected[q.n]===k;
+  inp.onchange=()=>selected[q.n]=k;
+  let span=document.createElement("span");
+  span.textContent=`(${k}) ${q.opts[k]}`;
+  lab.append(inp,span);$("options").append(lab);
+ }
+ $("prevBtn").disabled=index===0;
+ $("nextBtn").classList.toggle("hidden",index===questions.length-1);
+ $("submitBtn").classList.toggle("hidden",index!==questions.length-1);
+ startTimer();
 }
-home();
+
+$("prevBtn").onclick=()=>{if(index>0){index--;render()}};
+$("nextBtn").onclick=()=>{if(index<questions.length-1){index++;render()}};
+$("submitBtn").onclick=submit;
+
+function submit(){
+ if(done)return;
+ done=true;stop();
+ let correct=0,wrong=0,blank=0;
+ for(const q of questions){
+  if(!selected[q.n])blank++;
+  else if(selected[q.n]===answerKey[q.n])correct++;
+  else wrong++;
+ }
+ let score=correct*2-wrong/3;
+ $("testPanel").classList.add("hidden");
+ $("resultPanel").classList.remove("hidden");
+ const res=$("resultPanel");
+ res.innerHTML=`<h2>टेस्ट परिणाम</h2>
+ <div class="score">${score.toFixed(2)} अंक</div>
+ <p>सही: ${correct} · गलत: ${wrong} · छोड़े: ${blank} · कुल: ${questions.length}</p>
+ <p>सही उत्तर +2 · गलत उत्तर −⅓</p><h3>उत्तर जाँच</h3>
+ <div id="review"></div><button id="restart">नया टेस्ट</button>`;
+ const review=$("review");
+ questions.forEach((q,i)=>{
+  let p=document.createElement("p");
+  p.textContent=`${i+1}. आपका उत्तर: ${selected[q.n]||"नहीं दिया"} | सही उत्तर: ${answerKey[q.n]} — ${selected[q.n]===answerKey[q.n]?"सही":"गलत/छोड़ा"}`;
+  review.append(p);
+ });
+ $("restart").onclick=()=>{
+  questions=[];answerKey={};selected={};$("pdfFile").value="";
+  res.classList.add("hidden");say("नई PDF चुनें।");
+  $("uploadPanel").scrollIntoView({behavior:"smooth"});
+ };
+ res.scrollIntoView({behavior:"smooth"});
+}
 </script>
 </body>
 </html>
