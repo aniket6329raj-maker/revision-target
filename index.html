@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revision Target</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f3f5fa;margin:0;color:#172033}
+header{background:#173ea5;color:white;padding:18px;text-align:center}
+main{max-width:700px;margin:auto;padding:14px}
+.card{background:white;padding:16px;margin:12px 0;border-radius:14px;box-shadow:0 2px 8px #ddd}
+button{padding:12px;border:0;border-radius:9px;background:#175cd3;color:white;font-size:15px;margin:4px;cursor:pointer}
+.menu button{width:47%;min-height:65px}
+.option{display:block;width:100%;text-align:left;background:white;color:#172033;border:1px solid #aaa}
+.option.selected{background:#dbeafe;border:2px solid #175cd3}
+.hidden{display:none}
+.muted{color:#667085;font-size:14px}
+</style>
+</head>
+<body>
+<header><h2>Revision Target</h2>UPSC CSE 2027</header>
+<main>
+<section id="home" class="card">
+<h3>आपका टेस्ट डैशबोर्ड</h3>
+<p class="muted">प्रश्न कोड में जोड़ें। टेस्ट के बाद स्कोर मिलेगा। कोई स्कोर या इतिहास सेव नहीं होगा।</p>
+<div class="menu">
+<button onclick="openSection('new')">New Test</button>
+<button onclick="openSection('old')">Old Topic</button>
+<button onclick="openSection('serial')">Serial Tests</button>
+<button onclick="openSection('daily')">Daily Task</button>
+<button onclick="openSection('sunday')">Sunday Test</button>
+</div>
+</section>
+
+<section id="list" class="card hidden">
+<button onclick="home()">मुख्य पेज</button>
+<h3 id="heading"></h3><p id="hint" class="muted"></p>
+<div id="tests"></div>
+</section>
+
+<section id="quiz" class="card hidden">
+<p id="label"></p><p id="timer">20 सेकंड</p>
+<p id="number"></p><h3 id="question"></h3>
+<div id="options"></div>
+<button onclick="move(-1)">पिछला</button>
+<button onclick="move(1)">अगला</button>
+<button onclick="submit()">सबमिट टेस्ट</button>
+</section>
+
+<section id="result" class="card hidden">
+<h2>टेस्ट परिणाम</h2><h2 id="score"></h2>
+<div id="summary"></div>
+<button onclick="home()">मुख्य पेज</button>
+<button onclick="openSection('serial')">नया टेस्ट</button>
+<h3>उत्तर की जाँच</h3><div id="review"></div>
+</section>
+</main>
+
+<script>
+// ========== QUESTION_BANK: अपने प्रश्न यहाँ जोड़ें ==========
+// answer: 0=A, 1=B, 2=C, 3=D
+// date का प्रारूप YYYY-MM-DD रखें।
+const QUESTION_BANK = [
+{
+ date:"2026-10-23",
+ topic:"Polity",
+ question:"भारतीय संविधान कब लागू हुआ?",
+ options:["15 अगस्त 1947","26 जनवरी 1950","26 नवंबर 1949","2 अक्टूबर 1950"],
+ answer:1,
+ explanation:"भारतीय संविधान 26 जनवरी 1950 को लागू हुआ।"
+},
+{
+ date:"2026-10-22",
+ topic:"Polity",
+ question:"संविधान सभा के स्थायी अध्यक्ष कौन थे?",
+ options:["डॉ. आंबेडकर","जवाहरलाल नेहरू","डॉ. राजेंद्र प्रसाद","सरदार पटेल"],
+ answer:2,
+ explanation:"डॉ. राजेंद्र प्रसाद संविधान सभा के स्थायी अध्यक्ष थे।"
+},
+{
+ date:"2026-10-20",
+ topic:"Polity",
+ question:"प्रस्तावना में भारत को किस रूप में वर्णित किया गया है?",
+ options:["राजतंत्र","संप्रभु समाजवादी पंथनिरपेक्ष लोकतंत्रात्मक गणराज्य","सैन्य राज्य","उपनिवेश"],
+ answer:1,
+ explanation:"ये शब्द भारतीय संविधान की प्रस्तावना में हैं।"
+}
+];
+// ========== प्रश्न जोड़ने के बाद नीचे का कोड न बदलें ==========
+
+let qs=[],ans=[],pos=0,seconds=20,clock=null,testName="";
+const $=id=>document.getElementById(id);
+function hide(){["home","list","quiz","result"].forEach(x=>$(x).classList.add("hidden"))}
+function home(){clearInterval(clock);hide();$("home").classList.remove("hidden")}
+function age(date){
+ let a=new Date();a.setHours(0,0,0,0);
+ return Math.floor((a-new Date(date+"T00:00:00"))/86400000);
+}
+function openSection(type){
+ clearInterval(clock);hide();$("list").classList.remove("hidden");
+ $("tests").innerHTML="";
+ let data=[],title="",hint="";
+ if(type==="new"){
+ title="New Test";hint="आज और कल के प्रश्न";
+ data=QUESTION_BANK.filter(q=>age(q.date)>=0&&age(q.date)<=1);
+ }
+ if(type==="old"){
+ title="Old Topic";hint="2 दिन से अधिक पुराने प्रश्न";
+ data=QUESTION_BANK.filter(q=>age(q.date)>=2);
+ }
+ if(type==="serial"){
+ title="Serial Tests";hint="प्रश्नों को क्रम से 10-10 के टेस्ट में बाँटा गया है";
+ data=QUESTION_BANK.slice();
+ }
+ if(type==="daily"){
+ title="Daily Task";hint="100 + 100 प्रश्न";
+ data=QUESTION_BANK.filter(q=>age(q.date)>=0&&age(q.date)<=1);
+ }
+ if(type==="sunday"){
+ title="Sunday Test";hint="पिछले 30 दिनों के प्रश्न; लक्ष्य 200";
+ data=QUESTION_BANK.filter(q=>age(q.date)>=0&&age(q.date)<30);
+ }
+ $("heading").textContent=title;$("hint").textContent=hint;
+ if(!data.length){$("tests").textContent="इस सेक्शन में प्रश्न नहीं हैं। QUESTION_BANK में प्रश्न और सही तारीख जोड़ें।";return}
+ if(type==="serial"){
+ for(let i=0;i<data.length;i+=10){
+  const part=data.slice(i,i+10);
+  addButton("Test "+(Math.floor(i/10)+1)+" ("+part.length+" प्रश्न)",()=>start(part,"Test "+(Math.floor(i/10)+1),false));
+ }
+ }else if(type==="daily"){
+ for(let i=0;i<2;i++){
+  const part=data.slice(i*100,(i+1)*100);
+  addButton("Daily Task "+(i+1)+" ("+part.length+" प्रश्न)",()=>start(part,"Daily Task "+(i+1),false));
+ }
+ }else{
+ const size=type==="sunday"?200:10;
+ const part=data.slice(0,size);
+ addButton(title+" ("+part.length+" प्रश्न)",()=>start(part,title,type==="sunday"));
+ }
+}
+function addButton(text,fn){
+ const b=document.createElement("button");b.textContent=text;b.style.display="block";b.style.width="100%";b.onclick=fn;$("tests").appendChild(b);
+}
+function start(data,name,sunday){
+ if(!data.length){alert("प्रश्न उपलब्ध नहीं हैं");return}
+ qs=data;ans=Array(qs.length).fill(null);pos=0;testName=name;
+ window.sundayMode=sunday;hide();$("quiz").classList.remove("hidden");
+ $("label").textContent=name;draw();resetClock();
+}
+function draw(){
+ const q=qs[pos];$("number").textContent="प्रश्न "+(pos+1)+" / "+qs.length+" • उत्तर दिए: "+ans.filter(x=>x!==null).length;
+ $("question").textContent=q.question;$("options").innerHTML="";
+ q.options.forEach((o,i)=>{
+  const b=document.createElement("button");b.className="option"+(ans[pos]===i?" selected":"");
+  b.textContent=String.fromCharCode(65+i)+". "+o;
+  b.onclick=()=>{ans[pos]=i;draw()};$("options").appendChild(b);
+ });
+}
+function move(n){pos=Math.max(0,Math.min(qs.length-1,pos+n));draw();resetClock()}
+function resetClock(){
+ clearInterval(clock);seconds=20;showTime();
+ clock=setInterval(()=>{
+  seconds--;showTime();
+  if(seconds<=0){
+   if(pos<qs.length-1){pos++;draw();resetClock()}
+   else submit(true);
+  }
+ },1000);
+}
+function showTime(){$("timer").textContent="समय: "+seconds+" सेकंड"}
+function submit(auto=false){
+ clearInterval(clock);let correct=0,wrong=0,blank=0;
+ qs.forEach((q,i)=>{if(ans[i]===null)blank++;else if(ans[i]===q.answer)correct++;else wrong++});
+ const per=window.sundayMode?2.5:2;
+ const minus=window.sundayMode?5/6:2/3;
+ const score=correct*per-wrong*minus;
+ hide();$("result").classList.remove("hidden");
+ $("score").textContent=score.toFixed(2)+" अंक";
+ $("summary").innerHTML="कुल प्रश्न: "+qs.length+"<br>सही उत्तर: "+correct+"<br>गलत उत्तर: "+wrong+"<br>छोड़े गए: "+blank+"<br>प्रतिशत: "+(qs.length?(Math.max(0,score)/(qs.length*per)*100).toFixed(2):0)+"%"+(auto?"<br>समय समाप्त हुआ; टेस्ट अपने-आप सबमिट हुआ.":"");
+ $("review").innerHTML="";
+ qs.forEach((q,i)=>{
+  const d=document.createElement("div");d.className="card";
+  const ua=ans[i]===null?"छोड़ा गया":String.fromCharCode(65+ans[i])+". "+q.options[ans[i]];
+  d.innerHTML="<b>प्रश्न "+(i+1)+": "+q.question+"</b><p>आपका उत्तर: "+ua+"</p><p>सही उत्तर: "+String.fromCharCode(65+q.answer)+". "+q.options[q.answer]+"</p><p class='muted'>"+(q.explanation||"")+"</p>";
+  $("review").appendChild(d);
+ });
+}
+home();
+</script>
+</body>
+</html>
